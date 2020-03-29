@@ -103,6 +103,10 @@ class _ModuleBuilder(_Namer, _BufferedBuilder, _AttrBuilder):
     def wire(self, width, port_id=None, port_kind=None, name=None, attrs={}, src=""):
         self._attributes(attrs, src=src, indent=1)
         name = self._make_name(name, local=False)
+        if width > 1e6:
+            raise ValueError("Attempted to create a wire wider than 1,000,000 bits. "
+                             "An operation may be extending its output width based on "
+                             "the width of its inputs.")
         if port_id is None:
             self._append("  wire width {} {}\n", width, name)
         else:
