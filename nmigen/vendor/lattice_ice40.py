@@ -345,7 +345,7 @@ class LatticeICE40Platform(TemplatedPlatform):
         # Otherwise, use the defined Clock resource.
         return super().default_clk_constraint
 
-    def create_missing_domain(self, name):
+    def create_missing_domain(self, name, *, reset_sig=None):
         # For unknown reasons (no errata was ever published, and no documentation mentions this
         # issue), iCE40 BRAMs read as zeroes for ~3 us after configuration and release of internal
         # global reset. Note that this is a *time-based* delay, generated purely by the internal
@@ -395,7 +395,9 @@ class LatticeICE40Platform(TemplatedPlatform):
                 clk_i = self.request(self.default_clk).i
                 delay = int(15e-6 * self.default_clk_frequency)
 
-            if self.default_rst is not None:
+            if reset_sig is not None:
+                rst_i = reset_sig
+            elif self.default_rst is not None:
                 rst_i = self.request(self.default_rst).i
             else:
                 rst_i = Const(0)
@@ -413,7 +415,7 @@ class LatticeICE40Platform(TemplatedPlatform):
             # Primary domain
             m.domains += ClockDomain("sync")
             m.d.comb += ClockSignal("sync").eq(clk_i)
-            if self.default_rst is not None:
+            if (reset_sig is not None) or (self.default_rst is not None):
                 m.submodules.reset_sync = ResetSynchronizer(~ready | rst_i, domain="sync")
             else:
                 m.d.comb += ResetSignal("sync").eq(~ready)
